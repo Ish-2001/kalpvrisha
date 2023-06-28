@@ -1,0 +1,124 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Pair {
+    char* key;
+    char* value;
+} pair;
+
+typedef struct Hashtable {
+    pair** values;
+    int size;
+} hashtable;
+
+unsigned int hashFunction(const char* str, int size) {
+    unsigned int hash = 0;
+
+    for (int j = 0; str[j] != '\0'; j++)
+        hash += str[j];
+
+    return hash % size;
+}
+
+hashtable* createTable(int size) {
+    hashtable* table = malloc(sizeof(hashtable));
+    table->size = size;
+    table->values = malloc(size * sizeof(pair*));
+
+    for (int i = 0; i < size; i++)
+        table->values[i] = NULL;
+
+    return table;
+}
+
+void insert(hashtable* table, const char* key, const char* value) {
+    unsigned int index = hashFunction(key, table->size);
+    pair* newpair = malloc(sizeof(pair));
+    newpair->key = malloc(strlen(key) + 1);
+    newpair->value = malloc(strlen(value) + 1);
+    strcpy(newpair->key, key);
+    strcpy(newpair->value, value);
+    newpair->key[strlen(key)] = '\0';       
+    newpair->value[strlen(value)] = '\0';   
+    table->values[index] = newpair;
+    //printf("%s\n", newpair->key);
+    //printf("%s", table->values[index]->value);
+}
+
+char* get(hashtable* table, const char* key) {
+   // printf("hi");
+    unsigned int index = hashFunction(key, table->size);
+    pair* searchedPair = table->values[index];
+    if (searchedPair != NULL && strcmp(searchedPair->key, key) == 0) {
+        //printf("%s", searchedPair->value);
+        return searchedPair->value;
+    }
+    return NULL;
+}
+
+int main() {
+    hashtable* hashTable = createTable(10);
+    int suburbs, towns, cooperations;
+    char city[30];
+    printf("Enter the name of the city:");
+    scanf("%s", city);
+    printf("Enter the number of suburbs you want:");
+    scanf("%d", &suburbs);
+
+    char suburb[30], town[30], cooperation[30];
+    for (int i = 0; i < suburbs; i++) {
+        printf("Enter the suburb %d:", (i + 1));
+        scanf(" %[^\n]%*c", suburb);
+        insert(hashTable, suburb, city);
+        printf("Enter the number of towns:");
+        scanf("%d", &towns);
+        for (int j = 0; j < towns; j++) {
+            printf("Enter the town %d:", (j + 1));
+            scanf(" %[^\n]%*c", town);
+            insert(hashTable, town, suburb);
+            printf("Enter the number of cooperations:");
+            scanf("%d", &cooperations);
+            for (int k = 0; k < cooperations; k++) {
+                printf("Enter the cooperation %d:", (k + 1));
+                scanf(" %[^\n]%*c", cooperation);
+                insert(hashTable, cooperation, town);
+            }
+        }
+    }
+
+    printf("\n\n");
+    char cooperationOne[20], cooperationTwo[20];
+    printf("Enter the first cooperation:");
+    scanf("%s", cooperationOne);
+    printf("Enter the second cooperation:");
+    scanf("%s", cooperationTwo);
+
+    char* cooperationOneTown = get(hashTable, cooperationOne);
+    char* cooperationTwoTown = get(hashTable, cooperationTwo);
+
+    
+
+    if (strcmp(cooperationOneTown, cooperationTwoTown) == 0) {
+        printf("%s", cooperationOneTown);
+        char* commonsuburb = get(hashTable, cooperationOneTown);
+        char* commoncity = get(hashTable, commonsuburb);
+        printf(",%s", commonsuburb);
+        printf(",%s", commoncity);
+    }
+    else {
+        char* suburbOne = get(hashTable, cooperationOneTown);
+        char* suburbTwo = get(hashTable, cooperationTwoTown);
+        if (strcmp(suburbOne, suburbTwo) == 0) {
+            printf("%s", suburbOne);
+            char* commoncity = get(hashTable, suburbOne);
+            printf(",%s", commoncity);
+        }
+        else {
+            char* commoncity = get(hashTable, suburbOne);
+            printf("%s", commoncity);
+        }
+    }
+
+    return 0;
+}
