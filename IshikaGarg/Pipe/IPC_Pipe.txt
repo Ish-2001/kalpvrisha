@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+void sort(int *unsortedArr,int n)
+{
+int temp;
+for(int i=0; i<n-1; i++)
+{
+for(int j=0; j<n-i-1; j++)
+{
+if(unsortedArr[j]>unsortedArr[j+1])
+{
+temp=unsortedArr[j];
+unsortedArr[j]=unsortedArr[j+1];
+unsortedArr[j+1]=temp;
+}
+}
+}
+}
+
+int main()
+{
+int fd1[2];
+int fd2[2];
+int n;
+pid_t p;
+
+if (pipe(fd1) == -1) {
+printf("Pipe Failed");
+return 1;
+}
+if (pipe(fd2) == -1) {
+printf("Pipe Failed");
+return 1;
+}
+printf("Enter the number of elements:");
+scanf("%d",&n);
+
+int arr[n];
+
+for(int i=0;i<n;i++){
+printf("Enter the element %d:",(i+1));
+scanf("%d",&arr[i]);
+}
+
+p = fork();
+
+if(p==0){
+close(fd1[1]);
+int unsortedArr[n];
+read(fd1[0], unsortedArr, sizeof(unsortedArr));
+
+sort(unsortedArr,n);
+
+close(fd1[0]);
+close(fd2[0]);
+write(fd2[1], unsortedArr, sizeof(unsortedArr)+1);
+close(fd2[1]);
+exit(0);
+}
+else if(p > 0) {
+int unsortedArr[n];
+
+close(fd1[0]);
+write(fd1[1], arr,sizeof(arr)+1);
+close(fd1[1]);
+
+wait(NULL);
+
+close(fd2[1]);
+read(fd2[0], unsortedArr, sizeof(unsortedArr));
+
+for(int i=0;i<n;i++){
+printf("%d ", unsortedArr[i]);
+}
+printf("\n");
+close(fd2[0]);
+}
+}

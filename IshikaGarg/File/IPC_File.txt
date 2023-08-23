@@ -1,0 +1,122 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/wait.h>
+
+
+void sort(int *arr,int n){
+int temp;
+for(int i=0; i<n-1; i++)
+{
+for(int j=0; j<n-i-1; j++)
+{
+if(arr[j]>arr[j+1]){
+temp=arr[j];
+arr[j]=arr[j+1];
+arr[j+1]=temp;
+}
+}
+}
+}
+
+void display(int n)
+{
+int a[n];
+
+FILE *sharedFile;
+sharedFile = fopen("sharedfile.txt","r");
+
+if(fptr == NULL)
+{
+printf("Error!");
+exit(1);
+}
+
+for(int i=0;i<n;i++){
+fscanf(sharedFile,"%d,",&a[i]);
+}
+
+for(int i=0; i<n; i++){
+printf("%d ",a[i]);
+}
+printf("\n");
+}
+
+void child(int n){
+FILE *sharedFile;
+sharedFile = fopen("sharedfile.txt", "r");
+
+if(fptr == NULL)
+{
+printf("Error!");
+exit(1);
+}
+
+int arr[n];
+for (int i = 0; i < n; i++)
+{
+fscanf(sharedFile, "%d,", &arr[i]);
+}
+fclose(sharedFile);
+sort(arr,n);
+
+FILE *fptr;
+fptr = fopen("sharedfile.txt","w");
+
+if(fptr == NULL)
+{
+printf("Error!");
+exit(1);
+}
+
+for(int i=0;i<n;i++){
+fprintf(fptr,"%d",arr[i]);
+fprintf(fptr,"%c",',');
+}
+}
+
+void main(){
+int child_status;
+
+int n;
+FILE* fptr;
+fptr = fopen("sharedfile.txt","w");
+
+if(fptr == NULL)
+{
+printf("Error!");
+exit(1);
+}
+
+printf("Enter the number of elements:");
+scanf("%d",&n);
+
+int arr[n];
+
+for(int i=0;i<n;i++){
+printf("Enter the element %d:",(i+1));
+scanf("%d",&arr[i]);
+fprintf(fptr,"%d",arr[i]);
+fprintf(fptr,"%c",',');
+}
+
+fclose(fptr);
+
+pid_t ppid = fork();
+
+if(ppid==0){
+child(n);
+}
+else{
+wait(&child_status);
+if (WIFEXITED(child_status)) {
+display(n);
+}
+else{
+fprintf(stderr, "Child process failed\n");
+exit(EXIT_FAILURE);
+}
+}
+}
